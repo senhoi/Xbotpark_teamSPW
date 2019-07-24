@@ -36,27 +36,26 @@ void TASKS_Init()
 	USART6_Init();
 
 	/* Actuator Configuation */
-	RM_MotorInit(2, RM_MotorType_M3508, RM_MotorMode_Velocity);
+	RM_MotorInit(0, RM_MotorType_M3508, RM_MotorMode_Velocity); //Chassis horizontal axis
+	RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis
+	RM_MotorInit(2, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator roll axis
+	RM_MotorInit(3, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis
+	RM_MotorInit(4, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator roll axis
 
 	PWM_ServoInit(&Sevro_Trigger, TIM4, 1, 2500, 500, 300.0f, 0.0f, 150.0f);
 
-	UART_SetTxFrame(&Uart2PC, 0x55AA, 0xAA55, 0x01, UART_FUNC_DATA_FLT);
+	UART_SetTxFrame(&Uart2PC, 0x55AA, 0xAA55, 0x01, UART_FUNC_DATA_N32);
 	UART_SetRxFrame(&PC2Uart, 0x55AA, 0xAA55);
 
 	Uart2PC.ready = true;
 }
 
+
 void TASKS_Timer_H_1000hz()
 {
-	DT7 = get_remote_control_point();
-
-	_TASKS_ManualCtrl();
-
 	RM_MotorCtrlCalc();
 
 	RM_MotorSendCmd_auto();
-
-	UART_AutoSend();
 }
 
 void TASKS_Timer_H_100hz()
@@ -65,6 +64,11 @@ void TASKS_Timer_H_100hz()
 
 void TASKS_Timer_H_50hz()
 {
+	DT7 = get_remote_control_point();
+
+	_TASKS_ManualCtrl();
+
+	UART_AutoSend();
 }
 
 void TASKS_Timer_H_10hz()
@@ -81,12 +85,12 @@ void TASKS_Timer_L_1000hz()
 
 void TASKS_Timer_L_100hz()
 {
-	UART_GetArr(&PC2Uart);
+	UART_GetReadyFlag(&PC2Uart);
 }
 
 void TASKS_Timer_L_50hz()
 {
-	float motor_data[3];
+	/* float motor_data[3];
 	if (RM_Motor[2].config.set_vel != 0)
 	{
 		motor_data[0] = RM_Motor[2].info.pos;
@@ -94,7 +98,7 @@ void TASKS_Timer_L_50hz()
 		motor_data[2] = RM_Motor[2].info.cur;
 		UART_SendArr_flt(&Uart2PC, motor_data, 3);
 		//UART_Printf(&Uart2PC, "%10.3f\t%10.3f\t\r\n", RM_Motor[2].config.set_pos, RM_Motor[2].info.pos);
-	}
+	}*/
 }
 
 void TASKS_Timer_L_10hz()
@@ -115,11 +119,20 @@ void TASKS_While()
 void _TASKS_ManualCtrl()
 {
 	static char s_prev[2];
+	int32_t remote_motor_data[2];
 
 	switch (DT7->rc.s[0])
 	{
 	case RC_SW_UP:
-		RM_MotorSetVel(2, 10 * DT7->rc.ch[1]);
+ 
+		RM_MotorSetVel(3, 10 * DT7->rc.ch[1]);
+		RM_MotorSetVel(4, -10 * DT7->rc.ch[1]);
+		RM_MotorSetVel(0, 10 * DT7->rc.ch[2]);
+		RM_MotorSetVel(1, 10 * DT7->rc.ch[3]);
+		RM_MotorSetVel(2, 10 * DT7->rc.ch[4]);
+		
+		UART_SendArr_32b(&Uart2PC, remote_motor_data, 2);
+
 		switch (DT7->rc.s[1])
 		{
 		case RC_SW_UP:

@@ -15,7 +15,7 @@ void PowerControl_Config(void)
 
     for (uint8_t i = POWER1_CTRL_SWITCH; i < POWER4_CTRL_SWITCH + 1; i++)
     {
-        PowerControl_Off(i);
+        PowerControl_On(i);
     }
 }
 

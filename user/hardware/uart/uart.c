@@ -157,35 +157,12 @@ uint8_t UART_SendArr_64b(UART_Frame_t *tx, void *arr, uint8_t len)
 	return 1;
 }
 
-uint8_t UART_GetArr(UART_Frame_t *rx)
+uint8_t UART_GetReadyFlag(UART_Frame_t *rx)
 {
-	uint8_t sum = 0;
-
 	if (rx->ready != true)
 		return 0;
 
 	rx->ready = false;
-
-	if ((uint16_t)(rx->buf[0] << 8 | rx->buf[1]) != rx->head)
-		return 0;
-
-	for (int i = 0; i < rx->buf[4]; i++)
-		sum += rx->buf[5 + i];
-
-	if (rx->buf[5 + rx->buf[4]] != sum)
-		return 0;
-
-	if ((uint16_t)(rx->buf[6 + rx->buf[4]] << 8 | rx->buf[7 + rx->buf[4]]) != rx->tail)
-		return 0;
-
-	rx->addr = rx->buf[2];
-	rx->func = rx->buf[3];
-	rx->len = rx->buf[4];
-	for (int i = 0; i < rx->buf[4]; i++)
-	{
-		rx->dat[i] = rx->buf[5 + i];
-	}
-	rx->sum = sum;
 
 	return 1;
 }
@@ -206,22 +183,21 @@ void UART_SetRxFrame(UART_Frame_t *rx, uint16_t head, uint16_t tail)
 
 void UART_ReadData(UART_Frame_t *rx, uint8_t rx_date)
 {
-	static uint8_t w;
+	static uint8_t w, i;
 	static uint8_t idx;
-	static UART_Frame_t temp_rx;
-	
-	temp_rx.head = rx->head;
-	temp_rx.tail = rx->tail;
+	uint8_t sum = 0;
+
+	if (rx->ready == true)
+		return;
 
 	switch (w)
 	{
 	case 0:
-		if (rx_date == (uint8_t)(temp_rx.head >> 8))
+		if (rx_date == (uint8_t)(rx->head >> 8))
 			w++;
-		
 		break;
 	case 1:
-		if (rx_date == (uint8_t)(temp_rx.head))
+		if (rx_date == (uint8_t)(rx->head))
 			w++;
 		else
 		{
@@ -230,12 +206,36 @@ void UART_ReadData(UART_Frame_t *rx, uint8_t rx_date)
 		}
 		break;
 	case 2:
-		if (rx_date == (uint8_t)(temp_rx.tail >> 8))
-			w++;
-
+		rx->addr = rx_date;
+		w++;
 		break;
 	case 3:
-		if (rx_date == (uint8_t)(temp_rx.tail))
+		rx->func = rx_date;
+		w++;
+		break;
+	case 4:
+		rx->len = rx_date;
+		w++;
+		break;
+	case 5:
+		rx->dat[i] = rx_date;
+		i++;
+		if (i >= rx->len)
+		{
+			i = 0;
+			w++;
+		}
+		break;
+	case 6:
+		rx->sum = rx_date;
+		w++;
+		break;
+	case 7:
+		if (rx_date == (uint8_t)(rx->tail >> 8))
+			w++;
+		break;
+	case 8:
+		if (rx_date == (uint8_t)(rx->tail))
 			w++;
 		else
 		{
@@ -250,15 +250,19 @@ void UART_ReadData(UART_Frame_t *rx, uint8_t rx_date)
 
 	if (w != 0)
 	{
-		temp_rx.buf[idx] = rx_date;
+		rx->buf[idx] = rx_date;
 		idx++;
-
-		if (w == 4)
-		{
-			temp_rx.ready = true;
-			*rx = temp_rx;
-			*rx = temp_rx;
-		}
+	}
+	if (w == 9)
+	{
+		w = 0;
+		idx = 0;
+		for (int i = 0; i < rx->len; i++)
+			sum += rx->dat[i];
+		if (rx->buf[5 + rx->buf[4]] != sum)
+			return;
+		else
+			rx->ready = true;
 	}
 }
 
