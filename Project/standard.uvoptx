@@ -120,10 +120,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>h窂
-?ywh窂
-?ywh窂
-</Name>
+          <Name>╭??yw╭??yw╭?</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -166,12 +163,12 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>RM_Motor[2].config.pid_vel</ItemText>
+          <ItemText>RM_Motor[0]</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>RM_Motor[2].config.pid_pos</ItemText>
+          <ItemText>RM_Motor[1]</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
@@ -207,6 +204,16 @@
           <count>8</count>
           <WinNumber>1</WinNumber>
           <ItemText>idx</ItemText>
+        </Ww>
+        <Ww>
+          <count>9</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>RM_Motor[0].config.set_cur</ItemText>
+        </Ww>
+        <Ww>
+          <count>10</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>RM_Motor[1].config.set_cur</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

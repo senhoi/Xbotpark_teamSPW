@@ -49,7 +49,7 @@ extern UART_Frame_t Uart2PC;
 
 uint8_t UART_Printf(UART_Frame_t *tx, char *fmt, ...);
 
-uint8_t UART_GetArr(UART_Frame_t *rx);
+uint8_t UART_GetReadyFlag(UART_Frame_t *rx);
 
 uint8_t UART_SendArr_8b(UART_Frame_t *tx, void *arr, uint8_t len);
 
