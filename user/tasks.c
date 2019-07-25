@@ -125,11 +125,12 @@ void _TASKS_ManualCtrl()
 	{
 	case RC_SW_UP:
  
-		RM_MotorSetVel(3, 10 * DT7->rc.ch[1]);
-		RM_MotorSetVel(4, -10 * DT7->rc.ch[1]);
-		RM_MotorSetVel(0, 10 * DT7->rc.ch[2]);
-		RM_MotorSetVel(1, 10 * DT7->rc.ch[3]);
-		RM_MotorSetVel(2, 10 * DT7->rc.ch[4]);
+		remote_motor_data[0] = 10 * DT7->rc.ch[0];
+		remote_motor_data[1] = -10 * DT7->rc.ch[0];
+
+		RM_MotorSetVel(0, 10 * DT7->rc.ch[1]);
+		RM_MotorSetVel(1, 10 * DT7->rc.ch[2]);
+		RM_MotorSetVel(2, 10 * DT7->rc.ch[3]);
 		
 		UART_SendArr_32b(&Uart2PC, remote_motor_data, 2);
 
@@ -169,6 +170,4 @@ void _TASKS_ManualCtrl()
 		break;
 	}
 
-	s_prev[0] = DT7->rc.s[0];
-	s_prev[1] = DT7->rc.s[1];
 }
