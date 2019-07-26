@@ -4,6 +4,7 @@
 #include "stm32f4xx.h"
 
 //#include "arm_math.h"
+#include "acuator.h"
 #include "adc.h"
 #include "buzzer.h"
 #include "can.h"
@@ -22,6 +23,7 @@
 #include "sys.h"
 #include "timer.h"
 #include "uart.h"
+#include "cstdlib.h"
 
 #include "user_lib.h"
 

@@ -128,7 +128,13 @@ void _TASKS_ManualCtrl()
 	switch (DT7->rc.s[0])
 	{
 	case RC_SW_UP:
- 
+		if (s_prev[0] != RC_SW_UP){	
+			RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis	
+			Acuator_reset();
+		} //Edge
+			
+	
+	
 		remote_motor_data[0] = 10 * DT7->rc.ch[0];
 		remote_motor_data[1] = -10 * DT7->rc.ch[0];
 
@@ -161,13 +167,23 @@ void _TASKS_ManualCtrl()
 		break;
 
 	case RC_SW_MID:
-		if (s_prev[0] != RC_SW_MID) //Edge
-			;
+		if (!Init_done()){	
+			Acuator_init(); //Actuator horizontal axis		
+		}//init process 
+		else{
+			
+		}
+
+		
+		
+		
 		break;
 
 	case RC_SW_DOWN:
-		if (s_prev[0] != RC_SW_DOWN) //Edge
-			;
+		if (s_prev[0] != RC_SW_DOWN){	
+			Acuator_reset();
+			RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis		
+		} //Edge
 		break;
 
 	default:
