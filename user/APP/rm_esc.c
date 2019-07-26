@@ -126,7 +126,7 @@ void RM_MotorCtrlCalc(void)
 
             if (RM_Motor[id].config.mode == RM_MotorMode_Position)
             {
-                RM_MotorSetVel(2, (int16_t)PID_Calc(&RM_Motor[id].config.pid_pos, RM_Motor[id].info.pos));
+                RM_MotorSetVel(id, (int16_t)PID_Calc(&RM_Motor[id].config.pid_pos, RM_Motor[id].info.pos));
                 RM_Motor[id].config.set_cur = PID_Calc(&RM_Motor[id].config.pid_vel, RM_Motor[id].info.vel);
             }
         }

@@ -24,8 +24,7 @@
 #include "sys.h"
 #include "timer.h"
 #include "uart.h"
-#include "cstdlib.h"
-
+#include "math.h"
 #include "user_lib.h"
 
 typedef signed char int8_t;

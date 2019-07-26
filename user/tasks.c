@@ -8,6 +8,7 @@ UART_Frame_t Uart2PC;
 UART_Frame_t PC2Uart;
 float received_data[2];//[0] represents for X-axis [1] represents for distance
 void _TASKS_ManualCtrl(void);
+int state;
 
 void TASKS_Init()
 {
@@ -128,6 +129,9 @@ void _TASKS_ManualCtrl()
 {
 	static char s_prev[2];
 	int32_t remote_motor_data[2];
+	
+	
+	
 
 	switch (DT7->rc.s[0])
 	{
@@ -171,8 +175,10 @@ void _TASKS_ManualCtrl()
 		break;
 
 	case RC_SW_MID:
+		
+		state = !Switch_GetLevel(SWITCH_NAME_FRONT);
 		if (!Init_done()){	
-			Acuator_init(); //Actuator horizontal axis		
+			Acuator_init(!Switch_GetLevel(SWITCH_NAME_FRONT)); //Actuator horizontal axis		
 		}//init process 
 		else{
 			
@@ -193,5 +199,8 @@ void _TASKS_ManualCtrl()
 	default:
 		break;
 	}
+
+	
+	
 
 }

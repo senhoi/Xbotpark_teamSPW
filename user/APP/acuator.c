@@ -1,32 +1,32 @@
 #include "acuator.h"
-
-static bool prev_switch = false;
-static bool init_start = false;
-static bool init_success = false;
+static uint8_t prev_switch = 0;
+static uint8_t init_start = 0;
+static uint8_t init_success = 0;
 static float init_pos = 0;
 static float set_pos = 0;
-static float distance = 0;
 
-void  Acuator_init(bool switch_off){
+void  Acuator_init(uint8_t switch_off){
 	
 	if(!init_start){
 		if(!switch_off){
-			RM_MotorSetVel(1, 0);	
+			RM_MotorSetVel(1, -1000);	
 		}
 		else{
 			if(!prev_switch){
-				init_start = true;
+				init_start = 1;
 				RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Position);
-				init_pos = RM_Motor[1].info.pos;
-				set_pos = init_pos + distance;
+				init_pos = RM_Motor[1].info.pos/RM_Motor[1].config.gear_ratio;
+				RM_Motor[1].config.pid_pos.max_out = 1000.0f;
+				RM_Motor[1].config.pid_pos.min_out = -1000.0f;
+				set_pos = init_pos + 360*init_distance/pos2len;
 				RM_MotorSetPos(1, set_pos);
 			}
 		}		
 	}
 	else{
-		int dist = RM_Motor[1].info.pos-set_pos;
-		if(abs(dist) < 10){
-			init_success = true;
+		float dist = RM_Motor[1].info.pos-set_pos;
+		if(fabs(dist) < 10){
+			init_success = 1;
 		}
 	}
 		
@@ -35,13 +35,13 @@ void  Acuator_init(bool switch_off){
 }
 
 void Acuator_reset(){
-	static float init_pos = 0;
-	static float set_pos = 0;
-	init_start = false;
-	init_success = false;
-	prev_switch = false;
+	init_pos = 0;
+	set_pos = 0;
+	init_start = 0;
+	init_success = 0;
+	prev_switch = 0;
 }
 
-bool Init_done(){
+uint8_t Init_done(){
 	return init_success;
 }
