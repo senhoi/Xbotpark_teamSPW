@@ -26,6 +26,8 @@ void TASKS_Init()
 
 	CAN1_Config(CAN_SJW_1tq, CAN_BS2_2tq, CAN_BS1_6tq, 5, CAN_Mode_Normal);
 	//CAN2_Config(CAN_SJW_1tq, CAN_BS2_2tq, CAN_BS1_6tq, 5, CAN_Mode_Normal);
+	
+	Switch_Init();
 
 	TIM3_Init(1000, 90);
 
@@ -53,6 +55,8 @@ void TASKS_Init()
 
 void TASKS_Timer_H_1000hz()
 {
+	Switch_Scan();
+	
 	RM_MotorCtrlCalc();
 
 	RM_MotorSendCmd_auto();

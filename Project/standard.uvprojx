@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F427X,USE_STDPERIPH_DRIVER,__FPU_USED,__FPU_PRESENT,ARM_MATH_CM4,__CC_ARM,ARM_MATH_MATRIX_CHECK,ARM_MATH_ROUNDING</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CMSIS;..\FWLIB\inc;..\User;..\User\AHRS;..\User\DSP\Include;..\user\user_lib;..\User\hardware\ADC;..\User\hardware\BUZZER;..\User\hardware\delay;..\User\hardware\EXIT_Init;..\User\hardware\CAN;..\User\hardware\LED;..\User\hardware\FLASH;..\User\hardware\LASER;..\User\hardware\POWER_CTRL;..\User\hardware\RC;..\User\hardware\RNG;..\User\hardware\SPI;..\User\hardware\SYS;..\user\hardware\timer;..\user\APP;..\user\user_lib;..\user\hardware\uart;..\user\hardware\pwm</IncludePath>
+              <IncludePath>..\CMSIS;..\FWLIB\inc;..\User;..\User\AHRS;..\User\DSP\Include;..\user\user_lib;..\User\hardware\ADC;..\User\hardware\BUZZER;..\User\hardware\delay;..\User\hardware\EXIT_Init;..\User\hardware\CAN;..\User\hardware\LED;..\User\hardware\FLASH;..\User\hardware\LASER;..\User\hardware\POWER_CTRL;..\User\hardware\RC;..\User\hardware\RNG;..\User\hardware\SPI;..\User\hardware\SYS;..\user\hardware\timer;..\user\APP;..\user\user_lib;..\user\hardware\uart;..\user\hardware\pwm;..\user\hardware\limit_switch</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -780,6 +780,11 @@
               <FileName>pwm.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\user\hardware\pwm\pwm.c</FilePath>
+            </File>
+            <File>
+              <FileName>switch.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\hardware\limit_switch\switch.c</FilePath>
             </File>
           </Files>
         </Group>
