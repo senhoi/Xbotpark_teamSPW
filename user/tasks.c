@@ -6,7 +6,7 @@ PWM_Servo_t Sevro_Trigger;
 
 UART_Frame_t Uart2PC;
 UART_Frame_t PC2Uart;
-
+float received_data[2];//[0] represents for X-axis [1] represents for distance
 void _TASKS_ManualCtrl(void);
 
 void TASKS_Init()
@@ -72,7 +72,11 @@ void TASKS_Timer_H_50hz()
 
 	_TASKS_ManualCtrl();
 
-	UART_AutoSend();
+	//UART_AutoSend();
+	
+	for(int i=0; i< PC2Uart.len/4;i++){
+		 received_data[i] = *((int* )(PC2Uart.dat) + i );	
+	}
 }
 
 void TASKS_Timer_H_10hz()
