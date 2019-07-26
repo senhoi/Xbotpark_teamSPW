@@ -20,6 +20,7 @@
 #include "rc.h"
 #include "remote.h"
 #include "rng.h"
+#include "switch.h"
 #include "sys.h"
 #include "timer.h"
 #include "uart.h"

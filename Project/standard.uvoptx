@@ -119,6 +119,10 @@
       <TargetDriverDllRegistry>
         <SetRegEntry>
           <Number>0</Number>
+          <Key>DLGUARM</Key>
+        </SetRegEntry>
+        <SetRegEntry>
+          <Number>0</Number>
           <Key>PWSTATINFO</Key>
           <Name>200,50,700</Name>
         </SetRegEntry>
@@ -159,7 +163,7 @@
           <Type>0</Type>
           <LineNumber>238</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134228818</Address>
+          <Address>134229228</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -175,7 +179,7 @@
           <Type>0</Type>
           <LineNumber>234</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134228796</Address>
+          <Address>134229212</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -189,25 +193,9 @@
         <Bp>
           <Number>2</Number>
           <Type>0</Type>
-          <LineNumber>230</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134228780</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\user\hardware\uart\uart.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\infantry\../user/hardware/uart/uart.c\230</Expression>
-        </Bp>
-        <Bp>
-          <Number>3</Number>
-          <Type>0</Type>
           <LineNumber>217</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134228716</Address>
+          <Address>134229132</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -219,11 +207,11 @@
           <Expression>\\infantry\../user/hardware/uart/uart.c\217</Expression>
         </Bp>
         <Bp>
-          <Number>4</Number>
+          <Number>3</Number>
           <Type>0</Type>
           <LineNumber>213</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134228700</Address>
+          <Address>134229116</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -233,22 +221,6 @@
           <Filename>..\user\hardware\uart\uart.c</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\infantry\../user/hardware/uart/uart.c\213</Expression>
-        </Bp>
-        <Bp>
-          <Number>5</Number>
-          <Type>0</Type>
-          <LineNumber>209</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134228684</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\user\hardware\uart\uart.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\infantry\../user/hardware/uart/uart.c\209</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -920,7 +892,7 @@
 
   <Group>
     <GroupName>AHRS</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -1020,7 +992,7 @@
 
   <Group>
     <GroupName>user_lib</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -1064,7 +1036,7 @@
 
   <Group>
     <GroupName>main</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -1248,7 +1220,7 @@
       <GroupNumber>8</GroupNumber>
       <FileNumber>70</FileNumber>
       <FileType>1</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\user\hardware\sys\sys.c</PathWithFileName>
@@ -1292,6 +1264,18 @@
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
+    <File>
+      <GroupNumber>8</GroupNumber>
+      <FileNumber>74</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>..\user\hardware\limit_switch\switch.c</PathWithFileName>
+      <FilenameWithoutPath>switch.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
   </Group>
 
   <Group>
@@ -1302,7 +1286,7 @@
     <RteFlg>0</RteFlg>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>74</FileNumber>
+      <FileNumber>75</FileNumber>
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
@@ -1314,7 +1298,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>75</FileNumber>
+      <FileNumber>76</FileNumber>
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
@@ -1326,7 +1310,7 @@
     </File>
     <File>
       <GroupNumber>9</GroupNumber>
-      <FileNumber>76</FileNumber>
+      <FileNumber>77</FileNumber>
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
