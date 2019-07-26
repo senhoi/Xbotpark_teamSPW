@@ -6,9 +6,8 @@ PWM_Servo_t Sevro_Trigger;
 
 UART_Frame_t Uart2PC;
 UART_Frame_t PC2Uart;
-float received_data[2];//[0] represents for X-axis [1] represents for distance
+float received_data[2]; //[0] represents for X-axis [1] represents for distance
 void _TASKS_ManualCtrl(void);
-int state;
 
 void TASKS_Init()
 {
@@ -27,7 +26,7 @@ void TASKS_Init()
 
 	CAN1_Config(CAN_SJW_1tq, CAN_BS2_2tq, CAN_BS1_6tq, 5, CAN_Mode_Normal);
 	//CAN2_Config(CAN_SJW_1tq, CAN_BS2_2tq, CAN_BS1_6tq, 5, CAN_Mode_Normal);
-	
+
 	Switch_Init();
 
 	TIM3_Init(1000, 90);
@@ -43,7 +42,8 @@ void TASKS_Init()
 	RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis
 	RM_MotorInit(2, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator roll axis
 	RM_MotorInit(3, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis
-	RM_MotorInit(4, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator roll axis
+
+	Actr_Init(&Actr_Deepth_Main, 1, 22.5);
 
 	PWM_ServoInit(&Sevro_Trigger, TIM4, 1, 2500, 500, 300.0f, 0.0f, 150.0f);
 
@@ -53,11 +53,10 @@ void TASKS_Init()
 	Uart2PC.ready = true;
 }
 
-
 void TASKS_Timer_H_1000hz()
 {
 	Switch_Scan();
-	
+
 	RM_MotorCtrlCalc();
 
 	RM_MotorSendCmd_auto();
@@ -74,9 +73,10 @@ void TASKS_Timer_H_50hz()
 	_TASKS_ManualCtrl();
 
 	//UART_AutoSend();
-	
-	for(int i=0; i< PC2Uart.len/4;i++){
-		 received_data[i] = *((int* )(PC2Uart.dat) + i );	
+
+	for (int i = 0; i < PC2Uart.len / 4; i++)
+	{
+		received_data[i] = *((int *)(PC2Uart.dat) + i);
 	}
 }
 
@@ -129,27 +129,21 @@ void _TASKS_ManualCtrl()
 {
 	static char s_prev[2];
 	int32_t remote_motor_data[2];
-	
-	
-	
 
 	switch (DT7->rc.s[0])
 	{
-	case RC_SW_UP:
-		if (s_prev[0] != RC_SW_UP){	
-			RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis	
-			Acuator_reset();
-		} //Edge
-			
-	
-	
+	case RC_SW_UP:				   //摇杆控制模式
+		if (s_prev[0] != RC_SW_UP) //Edge
+			RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Velocity);
+
 		remote_motor_data[0] = 10 * DT7->rc.ch[0];
 		remote_motor_data[1] = -10 * DT7->rc.ch[0];
 
 		RM_MotorSetVel(0, 10 * DT7->rc.ch[1]);
 		RM_MotorSetVel(1, 10 * DT7->rc.ch[2]);
 		RM_MotorSetVel(2, 10 * DT7->rc.ch[3]);
-		
+		RM_MotorSetVel(3, -10 * DT7->rc.ch[2]);
+
 		UART_SendArr_32b(&Uart2PC, remote_motor_data, 2);
 
 		switch (DT7->rc.s[1])
@@ -170,37 +164,25 @@ void _TASKS_ManualCtrl()
 		default:
 			break;
 		}
-		if (s_prev[0] != RC_SW_UP) //Edge
-			;
 		break;
 
-	case RC_SW_MID:
-		
-		state = !Switch_GetLevel(SWITCH_NAME_FRONT);
-		if (!Init_done()){	
-			Acuator_init(!Switch_GetLevel(SWITCH_NAME_FRONT)); //Actuator horizontal axis		
-		}//init process 
-		else{
-			
+	case RC_SW_MID:					//归位模式
+		if (s_prev[0] != RC_SW_MID) //Edge
+		{
+			Actr_HomingReset(&Actr_Deepth_Main);
 		}
-
-		
-		
-		
+		Actr_Homing(&Actr_Deepth_Main, !Switch_GetLevel(SWITCH_NAME_FRONT), 100);
 		break;
 
 	case RC_SW_DOWN:
-		if (s_prev[0] != RC_SW_DOWN){	
-			Acuator_reset();
-			RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis		
-		} //Edge
+		if (s_prev[0] != RC_SW_DOWN) //Edge
+			;
 		break;
 
 	default:
 		break;
 	}
-
 	
-	
-
+	s_prev[0] = DT7->rc.s[0];
+	s_prev[1] = DT7->rc.s[1];
 }

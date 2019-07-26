@@ -39,12 +39,11 @@ void Switch_SetExitFunc(uint8_t switch_idx, void (*exit_func)(void))
 	Switch[switch_idx].exit_func = exit_func;
 }
 
-bool Switch_GetLevel(uint8_t switch_idx)
+uint8_t Switch_GetLevel(uint8_t switch_idx)
 {
 	return Switch[switch_idx].level;
 }
 
-uint8_t debug1,debug2;
 void Switch_Scan(void)
 {
 	Switch[SWITCH_NAME_FRONT].level = PEin(5);

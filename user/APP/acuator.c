@@ -1,47 +1,82 @@
 #include "acuator.h"
-static uint8_t prev_switch = 0;
-static uint8_t init_start = 0;
-static uint8_t init_success = 0;
-static float init_pos = 0;
-static float set_pos = 0;
 
-void  Acuator_init(uint8_t switch_off){
-	
-	if(!init_start){
-		if(!switch_off){
-			RM_MotorSetVel(1, -1000);	
-		}
-		else{
-			if(!prev_switch){
-				init_start = 1;
-				RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Position);
-				init_pos = RM_Motor[1].info.pos/RM_Motor[1].config.gear_ratio;
-				RM_Motor[1].config.pid_pos.max_out = 1000.0f;
-				RM_Motor[1].config.pid_pos.min_out = -1000.0f;
-				set_pos = init_pos + 360*init_distance/pos2len;
-				RM_MotorSetPos(1, set_pos);
+Actuator_t Actr_Lift;
+Actuator_t Actr_Move;
+Actuator_t Actr_Roll;
+Actuator_t Actr_Deepth_Main;
+Actuator_t Actr_Deepth_Trim;
+
+void Actr_Init(Actuator_t *actr, uint8_t id, float radius)
+{
+	actr->id = id;
+	actr->radius = radius;
+	actr->perimeter = 2 * 3.1416f * radius;
+}
+
+void Actr_Homing(Actuator_t *actr, uint8_t signal, float homing_shift)
+{
+	if (!Actr_GetHomingState(actr))
+	{
+		if (!actr->homing_start)
+		{
+			if (!signal)
+			{
+				if (RM_Motor[actr->id].config.mode != RM_MotorMode_Velocity)
+					RM_MotorInit(actr->id, RM_MotorType_M3508, RM_MotorMode_Velocity);
+				RM_MotorSetVel(actr->id, -1000);
 			}
-		}		
-	}
-	else{
-		float dist = RM_Motor[1].info.pos-set_pos;
-		if(fabs(dist) < 10){
-			init_success = 1;
+			else
+			{
+				if (RM_Motor[actr->id].config.mode != RM_MotorMode_Position)
+				{
+					RM_MotorInit(actr->id, RM_MotorType_M3508, RM_MotorMode_Position);
+					Actr_SetMaxVel(actr, 100.0f);
+				}
+				actr->homing_start = 1;
+				actr->offset = RM_MotorGetPos(actr->id);
+				Actr_SetPos(actr, homing_shift);
+			}
+		}
+		else
+		{
+			float dist = Actr_GetPos(actr) - homing_shift;
+			if (fabs(dist) < 10)
+			{
+				actr->homing_success = 1;
+			}
 		}
 	}
-		
-	prev_switch = switch_off;
-	
 }
 
-void Acuator_reset(){
-	init_pos = 0;
-	set_pos = 0;
-	init_start = 0;
-	init_success = 0;
-	prev_switch = 0;
+void Actr_HomingReset(Actuator_t *actr)
+{
+	actr->homing_start = 0;
+	actr->homing_success = 0;
+	actr->offset = 0;
 }
 
-uint8_t Init_done(){
-	return init_success;
+uint8_t Actr_GetHomingState(Actuator_t *actr)
+{
+	return actr->homing_success;
+}
+
+void Actr_SetPos(Actuator_t *actr, float pos)
+{
+	RM_MotorSetPos(actr->id, actr->offset + 360 * pos / actr->perimeter);
+}
+
+void Actr_SetMaxVel(Actuator_t *actr, float vel)
+{
+	RM_Motor[actr->id].config.pid_pos.max_out = vel / actr->perimeter * 60.0f * RM_Motor[actr->id].config.gear_ratio;
+	RM_Motor[actr->id].config.pid_pos.min_out = -vel / actr->perimeter * 60.0f * RM_Motor[actr->id].config.gear_ratio;
+}
+
+float Actr_GetPos(Actuator_t *actr)
+{
+	return RM_MotorGetPos(actr->id) / 360 * actr->perimeter;
+}
+
+float Actr_GetVel(Actuator_t *actr)
+{
+	return RM_MotorGetVel(actr->id) * actr->perimeter / 60.0f / RM_Motor[actr->id].config.gear_ratio;
 }

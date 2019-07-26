@@ -786,6 +786,11 @@
               <FileType>1</FileType>
               <FilePath>..\user\hardware\limit_switch\switch.c</FilePath>
             </File>
+            <File>
+              <FileName>acuator.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\APP\acuator.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

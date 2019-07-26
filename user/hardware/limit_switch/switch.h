@@ -28,6 +28,6 @@ extern Switch_t Switch[10];
 void Switch_Init(void);
 void Switch_Scan(void);
 void Switch_SetExitFunc(uint8_t switch_idx, void (*exit_func)(void));
-bool Switch_GetLevel(uint8_t switch_idx);
+uint8_t Switch_GetLevel(uint8_t switch_idx);
 
 #endif

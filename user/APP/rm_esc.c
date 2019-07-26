@@ -19,13 +19,13 @@ void RM_MotorInit(uint8_t id, RM_MotorType_t type, RM_MotorMode_t mode)
         RM_Motor[id].config.gear_ratio = 36.0f;
         PID_Init(&RM_Motor[id].config.pid_pos, PID_Mode_Regular, 8.0f, 0.0f, 0.0f, 0.0f, 5000, -5000, 170.0f);
         PID_Init(&RM_Motor[id].config.pid_vel, PID_Mode_Increment, 10.0f, 0.05f, 0.0f, 0.0f, 16384.0f, -16384.0f, 10000.0f);
-				PID_SetIntSp(&RM_Motor[id].config.pid_vel, true, 10.0f);
+        PID_SetIntSp(&RM_Motor[id].config.pid_vel, true, 10.0f);
         break;
     case RM_MotorType_Unknown:
         RM_Motor[id].config.gear_ratio = 1.0f;
         PID_Init(&RM_Motor[id].config.pid_pos, PID_Mode_Regular, 8.0f, 0.0f, 0.0f, 0.0f, 5000, -5000, 170.0f);
         PID_Init(&RM_Motor[id].config.pid_vel, PID_Mode_Increment, 10.0f, 0.05f, 0.0f, 0.0f, 16384.0f, -16384.0f, 10000.0f);
-				PID_SetIntSp(&RM_Motor[id].config.pid_vel, true, 10.0f);
+        PID_SetIntSp(&RM_Motor[id].config.pid_vel, true, 10.0f);
         break;
     default:
         break;
@@ -159,4 +159,24 @@ void RM_MotorSetPos_(uint8_t id, float pos)
 {
     RM_Motor[id].config.set_pos = pos;
     PID_SetRef(&RM_Motor[id].config.pid_pos, RM_Motor[id].config.set_pos);
+}
+
+float RM_MotorGetPos(uint8_t id)
+{
+    return RM_Motor[id].info.pos / RM_Motor[id].config.gear_ratio;
+}
+
+float RM_MotorGetPos_(uint8_t id)
+{
+    return RM_Motor[id].info.pos;
+}
+
+float RM_MotorGetVel(uint8_t id)
+{
+    return RM_Motor[id].info.vel / RM_Motor[id].config.gear_ratio;
+}
+
+float RM_MotorGetVel_(uint8_t id)
+{
+    return RM_Motor[id].info.vel;
 }

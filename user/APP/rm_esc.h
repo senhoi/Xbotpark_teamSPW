@@ -67,4 +67,9 @@ uint8_t RM_MotorSendCmd(uint16_t std_id, uint16_t cur1, uint16_t cur2, uint16_t 
 void RM_MotorEnable(uint8_t id);
 void RM_MotorDisable(uint8_t id);
 
+float RM_MotorGetPos(uint8_t id);
+float RM_MotorGetPos_(uint8_t id);
+float RM_MotorGetVel(uint8_t id);
+float RM_MotorGetVel_(uint8_t id);
+
 #endif
