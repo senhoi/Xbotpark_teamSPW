@@ -159,12 +159,15 @@ uint8_t UART_SendArr_64b(UART_Frame_t *tx, void *arr, uint8_t len)
 
 uint8_t UART_GetReadyFlag(UART_Frame_t *rx)
 {
-	if (rx->ready != true)
+	if (rx->ready == false)
+	{
 		return 0;
-
-	rx->ready = false;
-
-	return 1;
+	}
+	else
+	{
+		rx->ready = false;
+		return 1;
+	}
 }
 
 void UART_SetTxFrame(UART_Frame_t *tx, uint16_t head, uint16_t tail, uint8_t addr, uint8_t func)
@@ -181,9 +184,10 @@ void UART_SetRxFrame(UART_Frame_t *rx, uint16_t head, uint16_t tail)
 	rx->tail = tail;
 }
 
+uint8_t w;
 void UART_ReadData(UART_Frame_t *rx, uint8_t rx_date)
 {
-	static uint8_t w, i;
+	static uint8_t i;
 	static uint8_t idx;
 	uint8_t sum = 0;
 
@@ -199,6 +203,8 @@ void UART_ReadData(UART_Frame_t *rx, uint8_t rx_date)
 	case 1:
 		if (rx_date == (uint8_t)(rx->head))
 			w++;
+		else if (rx_date == (uint8_t)(rx->head >> 8))
+			;
 		else
 		{
 			w = 0;
@@ -315,7 +321,7 @@ extern UART_Frame_t PC2Uart;
 
 void USART6_IRQHandler(void)
 {
-	static uint8_t RxData;
+	uint8_t RxData;
 
 	if (USART_GetFlagStatus(USART6, USART_IT_RXNE) != RESET)
 	{
@@ -326,6 +332,10 @@ void USART6_IRQHandler(void)
 
 		//USART_SendData(USART6, RxData);
 		//USART6->DR = RxData;
+	}
+	if (USART_GetFlagStatus(USART6, USART_IT_ORE_RX) != RESET)
+	{
+		USART_ClearITPendingBit(USART6, USART_IT_ORE_RX);
 	}
 
 	if (USART_GetITStatus(USART6, USART_IT_TC))
