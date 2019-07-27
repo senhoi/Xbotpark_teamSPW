@@ -40,7 +40,7 @@ void TASKS_Init()
 	/* Actuator Configuation */
 	RM_MotorInit(0, RM_MotorType_M3508, RM_MotorMode_Velocity); //Chassis horizontal axis
 	RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis
-	RM_MotorInit(2, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator roll axis
+	RM_MotorInit(2, RM_MotorType_M3508, RM_MotorMode_Position); //Actuator roll axis
 	RM_MotorInit(3, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis
 
 	Actr_Init(&Actr_Deepth_Main, 1, 22.5);
@@ -72,7 +72,7 @@ void TASKS_Timer_H_50hz()
 
 	_TASKS_ManualCtrl();
 
-	//UART_AutoSend();
+	UART_AutoSend();
 
 	for (int i = 0; i < PC2Uart.len / 4; i++)
 	{
@@ -128,7 +128,7 @@ void TASKS_While()
 void _TASKS_ManualCtrl()
 {
 	static char s_prev[2];
-	int32_t remote_motor_data[2];
+	static int32_t remote_motor_data[2];
 
 	switch (DT7->rc.s[0])
 	{
@@ -136,13 +136,13 @@ void _TASKS_ManualCtrl()
 		if (s_prev[0] != RC_SW_UP) //Edge
 			RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Velocity);
 
-		remote_motor_data[0] = 10 * DT7->rc.ch[0];
-		remote_motor_data[1] = -10 * DT7->rc.ch[0];
+		remote_motor_data[0] += 0.1 * DT7->rc.ch[0];
+		remote_motor_data[1] -= 0.1 * DT7->rc.ch[0];
 
 		RM_MotorSetVel(0, 10 * DT7->rc.ch[1]);
-		RM_MotorSetVel(1, 10 * DT7->rc.ch[2]);
-		RM_MotorSetVel(2, 10 * DT7->rc.ch[3]);
-		RM_MotorSetVel(3, -10 * DT7->rc.ch[2]);
+		RM_MotorSetVel(1, deadband(100, 10 * DT7->rc.ch[2]));
+		RM_MotorSetPos(2, DT7->rc.ch[3]);
+		RM_MotorSetVel(3, deadband(100, -10 * DT7->rc.ch[2]));
 
 		UART_SendArr_32b(&Uart2PC, remote_motor_data, 2);
 
@@ -150,7 +150,7 @@ void _TASKS_ManualCtrl()
 		{
 		case RC_SW_UP:
 			if (s_prev[1] != RC_SW_UP) //Edge
-				PWM_ServoSetVal(&Sevro_Trigger, 0.0f);
+				PWM_ServoSetVal(&Sevro_Trigger, 60.0f);
 			break;
 		case RC_SW_MID:
 			if (s_prev[1] != RC_SW_MID) //Edge
@@ -158,7 +158,7 @@ void _TASKS_ManualCtrl()
 			break;
 		case RC_SW_DOWN:
 			if (s_prev[1] != RC_SW_DOWN) //Edge
-				PWM_ServoSetVal(&Sevro_Trigger, 300.0f);
+				PWM_ServoSetVal(&Sevro_Trigger, 240.0f);
 			break;
 
 		default:

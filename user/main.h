@@ -15,6 +15,7 @@
 #include "led.h"
 #include "rm_esc.h"
 #include "pid.h"
+#include "pid_math.h"
 #include "power_ctrl.h"
 #include "pwm.h"
 #include "rc.h"
