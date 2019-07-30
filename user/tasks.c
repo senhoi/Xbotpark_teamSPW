@@ -2,12 +2,13 @@
 
 const RC_ctrl_t *DT7;
 
-PWM_Servo_t Sevro_Trigger;
-
 UART_Frame_t Uart2PC;
+UART_Frame_t Uart2PC_Release;
 UART_Frame_t PC2Uart;
 float received_data[2]; //[0] represents for X-axis [1] represents for distance
 void _TASKS_ManualCtrl(void);
+void _TASKS_AutoCtrl_Init(void);
+void _TASKS_AutoCtrl(void);
 
 void TASKS_Init()
 {
@@ -38,16 +39,23 @@ void TASKS_Init()
 	USART6_Init();
 
 	/* Actuator Configuation */
-	RM_MotorInit(0, RM_MotorType_M3508, RM_MotorMode_Velocity); //Chassis horizontal axis
-	RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis
+	RM_MotorInit(0, RM_MotorType_M3508, RM_MotorMode_Position); //Chassis horizontal axis
+	RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Position); //Actuator horizontal axis
 	RM_MotorInit(2, RM_MotorType_M3508, RM_MotorMode_Position); //Actuator roll axis
-	RM_MotorInit(3, RM_MotorType_M3508, RM_MotorMode_Velocity); //Actuator horizontal axis
+	RM_MotorInit(3, RM_MotorType_M3508, RM_MotorMode_Position); //Actuator horizontal axis
 
-	Actr_Init(&Actr_Deepth_Main, 1, 22.5);
+	RM_MotorInit(23, RM_MotorType_M3508, RM_MotorMode_Position); //Actuator vertical axis
+
+	Actr_Init(&Actr_Move, 0, 56.0f / 2.0f / 2, ACTR_MODE_POSITION, 150);
+	Actr_Init(&Actr_Lift, 23, 23, ACTR_MODE_POSITION, 100);
+	Actr_Init(&Actr_Deepth_Main, 1, 22.5, ACTR_MODE_POSITION, 100);
+	Actr_Init(&Actr_Roll, 2, 27.3, ACTR_MODE_POSITION, 360);
+	Actr_Init(&Actr_Deepth_Trim, 3, 25.46 / 2, ACTR_MODE_POSITION, 150);
 
 	PWM_ServoInit(&Sevro_Trigger, TIM4, 1, 2500, 500, 300.0f, 0.0f, 150.0f);
 
 	UART_SetTxFrame(&Uart2PC, 0x55AA, 0xAA55, 0x01, UART_FUNC_DATA_N32);
+	UART_SetTxFrame(&Uart2PC_Release, 0x55AA, 0xAA55, 0x02, UART_FUNC_DATA_N32);
 	UART_SetRxFrame(&PC2Uart, 0x55AA, 0xAA55);
 
 	Uart2PC.ready = true;
@@ -73,11 +81,6 @@ void TASKS_Timer_H_50hz()
 	_TASKS_ManualCtrl();
 
 	UART_AutoSend();
-
-	for (int i = 0; i < PC2Uart.len / 4; i++)
-	{
-		received_data[i] = *((int *)(PC2Uart.dat) + i);
-	}
 }
 
 void TASKS_Timer_H_10hz()
@@ -90,11 +93,16 @@ void TASKS_Timer_H_1hz()
 
 void TASKS_Timer_L_1000hz()
 {
+	Actr_Remote_Timer(&Actr_Lift);
 }
 
+float remote_motor_fdb[2] = {0};
 void TASKS_Timer_L_100hz()
 {
-	UART_GetReadyFlag(&PC2Uart);
+	if (UART_GetReadyFlag(&PC2Uart) == 0)
+		return;
+
+	memcpy(remote_motor_fdb, PC2Uart.dat, PC2Uart.len);
 }
 
 void TASKS_Timer_L_50hz()
@@ -125,26 +133,50 @@ void TASKS_While()
 	}
 }
 
-void _TASKS_ManualCtrl()
+float main_pos = 0;
+float trim_pos = 0;
+float move_pos = 0;
+float roll_deg = 0;
+float lift_pos = 0;
+
+Sys_t Sys_FlatWall;
+
+void _TASKS_ManualCtrl(void)
 {
 	static char s_prev[2];
-	static int32_t remote_motor_data[2];
 
 	switch (DT7->rc.s[0])
 	{
-	case RC_SW_UP:				   //摇杆控制模式
+	case RC_SW_UP:				   //遥控模式
 		if (s_prev[0] != RC_SW_UP) //Edge
-			RM_MotorInit(1, RM_MotorType_M3508, RM_MotorMode_Velocity);
+		{
+			Actr_SetMode(&Actr_Deepth_Main, ACTR_MODE_POSITION);
+			Actr_SetMode(&Actr_Deepth_Trim, ACTR_MODE_POSITION);
+			Actr_SetMode(&Actr_Move, ACTR_MODE_POSITION);
+			Actr_SetMode(&Actr_Roll, ACTR_MODE_POSITION);
 
-		remote_motor_data[0] += 0.1 * DT7->rc.ch[0];
-		remote_motor_data[1] -= 0.1 * DT7->rc.ch[0];
+			main_pos = Actr_GetPos(&Actr_Deepth_Main);
+			trim_pos = Actr_GetPos(&Actr_Deepth_Trim);
+			roll_deg = Actr_GetPos(&Actr_Roll);
+			move_pos = Actr_GetPos(&Actr_Move);
+			
+			Actr_Lift.offset = 0;
+			lift_pos = Actr_Remote_GetPos(&Actr_Lift);
+		}
 
-		RM_MotorSetVel(0, 10 * DT7->rc.ch[1]);
-		RM_MotorSetVel(1, deadband(100, 10 * DT7->rc.ch[2]));
-		RM_MotorSetPos(2, DT7->rc.ch[3]);
-		RM_MotorSetVel(3, deadband(100, -10 * DT7->rc.ch[2]));
+		lift_pos += 1.0f / 50.0f * DT7->rc.ch[1] / 660.0f * Actr_Lift.max_vel;
+		move_pos += 1.0f / 50.0f * DT7->rc.ch[0] / 660.0f * Actr_Move.max_vel;
+		main_pos += 1.0f / 50.0f * DT7->rc.ch[2] / 660.0f * Actr_Deepth_Main.max_vel;
+		main_pos = limit(540, 0, main_pos);
+		trim_pos = -0.0006f * main_pos * main_pos - 0.6017f * main_pos + 68.5432f;
+		trim_pos = limit(0, -440, trim_pos);
+		roll_deg += 1.0f / 50.0f * DT7->rc.ch[3] / 660.0f * Actr_Roll.max_vel;
 
-		UART_SendArr_32b(&Uart2PC, remote_motor_data, 2);
+		Actr_Remote_SetPos(&Actr_Lift, lift_pos);
+		Actr_SetPos(&Actr_Deepth_Trim, trim_pos);
+		Actr_SetPos(&Actr_Deepth_Main, main_pos);
+		Actr_SetPos(&Actr_Move, move_pos);
+		Actr_SetPos(&Actr_Roll, roll_deg);
 
 		switch (DT7->rc.s[1])
 		{
@@ -166,23 +198,125 @@ void _TASKS_ManualCtrl()
 		}
 		break;
 
-	case RC_SW_MID:					//归位模式
-		if (s_prev[0] != RC_SW_MID) //Edge
+	case RC_SW_MID:					 //卸力模式
+		if (s_prev[0] != RC_SW_DOWN) //Edge
 		{
-			Actr_HomingReset(&Actr_Deepth_Main);
+			Actr_Release(&Actr_Deepth_Trim);
+			Actr_Release(&Actr_Deepth_Main);
+			Actr_Release(&Actr_Move);
+			Actr_Release(&Actr_Roll);
+			PWM_ServoSetVal(&Sevro_Trigger, 150.0f);
+			Actr_Remote_Release();
 		}
-		Actr_Homing(&Actr_Deepth_Main, !Switch_GetLevel(SWITCH_NAME_FRONT), 100);
 		break;
 
-	case RC_SW_DOWN:
-		if (s_prev[0] != RC_SW_DOWN) //Edge
+	case RC_SW_DOWN:				//归位模式
+		if (s_prev[0] != RC_SW_MID) //Edge
 			;
+		switch (DT7->rc.s[1])
+		{
+		case RC_SW_UP:
+			if (s_prev[1] != RC_SW_UP) //Edge
+			{
+				Actr_HomingReset(&Actr_Deepth_Main);
+				Actr_HomingReset(&Actr_Deepth_Trim);
+				Actr_HomingReset(&Actr_Move);
+				Actr_HomingReset(&Actr_Roll);
+			}
+			Actr_Homing(&Actr_Deepth_Main, !Switch_GetLevel(SWITCH_NAME_FRONT), 100, -1000.0f);
+			Actr_Homing(&Actr_Deepth_Trim, 1, 0, 0.0f);
+			Actr_Homing(&Actr_Move, 1, 0, 0.0f);
+			Actr_Homing(&Actr_Roll, 1, 0, 0.0f);
+			Actr_Remote_Homing(&Actr_Lift);
+
+			break;
+
+		case RC_SW_MID:
+			if (s_prev[1] != RC_SW_MID) //Edge
+				;
+			break;
+
+		case RC_SW_DOWN:
+			if (s_prev[1] != RC_SW_DOWN) //Edge
+				_TASKS_AutoCtrl_Init();
+			_TASKS_AutoCtrl();
+			break;
+
+		default:
+			break;
+		}
+
 		break;
 
 	default:
 		break;
 	}
-	
+
 	s_prev[0] = DT7->rc.s[0];
 	s_prev[1] = DT7->rc.s[1];
+}
+
+void _TASKS_AutoCtrl_Init(void)
+{
+	Sys_Init(&Sys_FlatWall, &Actr_Move, &Actr_Lift, &Actr_Deepth_Main, &Actr_Roll);
+
+	/*Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 0, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY);	  //伸出喷头，不喷涂
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 1000, 0, 500, CMD_SURF_FRONT, CMD_PROG_WORKING);	//开始喷涂前方墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 1000, 500, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY); //下降一层，不喷涂
+
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 700, 500, 500, CMD_SURF_FRONT, CMD_PROG_WORKING); //开始喷涂前方墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 700, 500, 100, CMD_SURF_LEFT, CMD_PROG_WORKING);  //开始喷涂左侧墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 300, 500, 100, CMD_SURF_FRONT, CMD_PROG_WORKING); //开始喷涂前方墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 300, 500, 500, CMD_SURF_RIGHT, CMD_PROG_WORKING); //开始喷涂右侧墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 500, 500, CMD_SURF_FRONT, CMD_PROG_WORKING);   //开始喷涂前方墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 1000, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY); //下降一层，不喷涂
+
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_FAST, CMD_FRM_ABSOLUTE, 300, 1000, 500, CMD_SURF_BOTTOM, CMD_PROG_MOV_ONLY); //移动到凸台底部
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 700, 1000, 500, CMD_SURF_BOTTOM, CMD_PROG_WORKING);  //喷涂凸台底部
+
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_FAST, CMD_FRM_ABSOLUTE, 0, 1000, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY);   //返回
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 1000, 1000, 500, CMD_SURF_FRONT, CMD_PROG_WORKING); //开始喷涂前方墙面
+
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 1000, 1000, 500, CMD_SURF_FRONT, CMD_PROG_STOP); //停止*/
+
+	/*Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 0, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY);	  //伸出喷头，不喷涂
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 1000, 0, 500, CMD_SURF_FRONT, CMD_PROG_WORKING);	//开始喷涂前方墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 1000, 500, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY); //下降一层，不喷涂
+	
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 500, 500, CMD_SURF_FRONT, CMD_PROG_WORKING);	  //开始喷涂前方墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 1000, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY); //下降一层，不喷涂
+	
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 1000, 1000, 500, CMD_SURF_FRONT, CMD_PROG_WORKING);	  //开始喷涂前方墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 1000, 1000, 500, CMD_SURF_FRONT, CMD_PROG_STOP); //停止*/
+
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 0, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY);	  //伸出喷头，不喷涂
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 2000, 0, 500, CMD_SURF_FRONT, CMD_PROG_WORKING);	//开始喷涂前方墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 2000, 400, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY); //下降一层，不喷涂
+
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 400, 500, CMD_SURF_FRONT, CMD_PROG_WORKING);  //开始喷涂前方墙面
+	//Cmd_Add(&Sys_FlatWall, CMD_SPD_FAST, CMD_FRM_ABSOLUTE, 300, 400, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY); //快速移动，不喷涂
+	//Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 400, 500, CMD_SURF_FRONT, CMD_PROG_WORKING);	//开始喷涂前方墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 800, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY);   //下降一层，不喷涂
+
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 2000, 800, 500, CMD_SURF_FRONT, CMD_PROG_WORKING);	//开始喷涂前方墙面
+	//Cmd_Add(&Sys_FlatWall, CMD_SPD_FAST, CMD_FRM_ABSOLUTE, 700, 800, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY);   //快速移动，不喷涂
+	//Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 1000, 800, 500, CMD_SURF_FRONT, CMD_PROG_WORKING);   //开始喷涂前方墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 2000, 1200, 500, CMD_SURF_FRONT, CMD_PROG_MOV_ONLY); //下降一层，不喷涂
+
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 1200, 500, CMD_SURF_FRONT, CMD_PROG_WORKING); //开始喷涂前方墙面
+	Cmd_Add(&Sys_FlatWall, CMD_SPD_NORM, CMD_FRM_ABSOLUTE, 0, 1200, 500, CMD_SURF_FRONT, CMD_PROG_STOP);	//停止*/
+
+	Sys_ExecBegin(&Sys_FlatWall);
+}
+
+void _TASKS_AutoCtrl(void)
+{
+	Cmd_Interpret(&Sys_FlatWall);
+
+	main_pos = Actr_GetPos(Sys_FlatWall.actr_z);
+
+	trim_pos = -0.0006f * main_pos * main_pos - 0.6017f * main_pos + 68.5432f;
+	trim_pos = limit(0, -440, trim_pos);
+
+	Actr_SetPos(&Actr_Deepth_Trim, trim_pos);
 }

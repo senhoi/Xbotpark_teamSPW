@@ -119,14 +119,6 @@
       <TargetDriverDllRegistry>
         <SetRegEntry>
           <Number>0</Number>
-          <Key>DLGUARM</Key>
-          <Name>?t
-?鮲?t
-?鮲?t
-</Name>
-        </SetRegEntry>
-        <SetRegEntry>
-          <Number>0</Number>
           <Key>PWSTATINFO</Key>
           <Name>200,50,700</Name>
         </SetRegEntry>
@@ -167,7 +159,7 @@
           <Type>0</Type>
           <LineNumber>238</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134230968</Address>
+          <Address>134230912</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -183,7 +175,7 @@
           <Type>0</Type>
           <LineNumber>234</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134230952</Address>
+          <Address>134230896</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -197,34 +189,18 @@
         <Bp>
           <Number>2</Number>
           <Type>0</Type>
-          <LineNumber>217</LineNumber>
+          <LineNumber>267</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134230872</Address>
+          <Address>134221016</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\user\hardware\uart\uart.c</Filename>
+          <Filename>..\user\APP\acuator.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\infantry\../user/hardware/uart/uart.c\217</Expression>
-        </Bp>
-        <Bp>
-          <Number>3</Number>
-          <Type>0</Type>
-          <LineNumber>213</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134230856</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>..\user\hardware\uart\uart.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\infantry\../user/hardware/uart/uart.c\213</Expression>
+          <Expression>\\infantry\../user/APP/acuator.c\267</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -1260,7 +1236,7 @@
       <GroupNumber>8</GroupNumber>
       <FileNumber>73</FileNumber>
       <FileType>1</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\user\hardware\pwm\pwm.c</PathWithFileName>

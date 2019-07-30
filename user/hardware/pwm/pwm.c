@@ -1,5 +1,7 @@
 #include "pwm.h"
 
+PWM_Servo_t Sevro_Trigger;
+
 void PWM_TIM4_Config(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
