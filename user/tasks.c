@@ -5,7 +5,12 @@ const RC_ctrl_t *DT7;
 UART_Frame_t Uart2PC;
 UART_Frame_t Uart2PC_Release;
 UART_Frame_t PC2Uart;
-float received_data[2]; //[0] represents for X-axis [1] represents for distance
+int value = 0;
+int balcony_approach = 0;
+int balcony_arrive = 0;
+int balcony_enter = 0;
+int balcony_leaving = 0;
+int received_data[128]; //[0] represents for X-axis [1] represents for distance
 void _TASKS_ManualCtrl(void);
 void _TASKS_AutoCtrl_Init(void);
 void _TASKS_AutoCtrl(void);
@@ -72,6 +77,7 @@ void TASKS_Timer_H_1000hz()
 
 void TASKS_Timer_H_100hz()
 {
+	memcpy(received_data,PC2Uart.dat,PC2Uart.len);
 }
 
 void TASKS_Timer_H_50hz()
@@ -228,6 +234,60 @@ void _TASKS_ManualCtrl(void)
 			Actr_Homing(&Actr_Move, 1, 0, 0.0f);
 			Actr_Homing(&Actr_Roll, 1, 0, 0.0f);
 			Actr_Remote_Homing(&Actr_Lift);
+			
+			if( balcony_arrive ){
+				if((received_data[2]-cam2acu-50)%10 >4){
+					value = ((received_data[2]-cam2acu-50)/10 * 10 +5)*10;
+				}
+				else{
+					value = (received_data[2]-cam2acu-50)/10 * 100;			
+				}		
+			}
+			else{
+				if((received_data[1]-cam2acu-50)%10 >4){
+					value = ((received_data[1]-cam2acu-50)/10 * 10 +5)*10;
+				}
+				else{
+					value = (received_data[1]-cam2acu-50)/10 * 100;			
+				}	
+			
+			}
+
+
+					
+			if(Actr_GetHomingState(&Actr_Deepth_Main)){
+				if(value>max_length){
+					Actr_SetPos(&Actr_Deepth_Main,max_length);
+				}
+				else if(value<=0){
+				
+				}
+				else{
+					Actr_SetPos(&Actr_Deepth_Main,value);				
+				}
+			}
+			
+			
+			if(received_data[1]-received_data[4] >15 && !balcony_approach){
+				balcony_approach=1;		
+			}
+			else if(received_data[1]-received_data[2] >15 && balcony_approach){
+				balcony_arrive =1;
+				balcony_approach=0;
+			}
+			else if(balcony_arrive && abs(received_data[1]-received_data[2]) <5){
+				balcony_arrive =0;
+				balcony_enter = 1;
+			}
+			else if(balcony_enter && received_data[1]-received_data[2] <-15 ){
+				balcony_leaving = 1;
+				balcony_enter = 0;				
+			}
+			else if( balcony_leaving && abs(received_data[1]-received_data[2]) <5){
+				balcony_leaving = 0;
+			}
+			
+			
 
 			break;
 

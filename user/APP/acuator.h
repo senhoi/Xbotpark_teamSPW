@@ -2,7 +2,8 @@
 #define ACUATOR_H
 
 #include "main.h"
-
+#define cam2acu 8
+#define max_length 500
 typedef struct Actuator_t
 {
 	uint8_t id;

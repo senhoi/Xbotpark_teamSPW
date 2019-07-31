@@ -26,6 +26,7 @@
 #include "timer.h"
 #include "uart.h"
 #include "math.h"
+#include "stdlib.h"
 #include "user_lib.h"
 
 typedef signed char int8_t;
